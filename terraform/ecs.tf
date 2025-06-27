@@ -8,6 +8,7 @@ resource "aws_subnet" "public_1" {
   availability_zone       = "us-east-2a"
   map_public_ip_on_launch = true
 }
+
 resource "aws_subnet" "public_2" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.2.0/24"
@@ -40,8 +41,13 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-resource "aws_route_table_association" "assoc" {
-  subnet_id      = aws_subnet.public.id
+resource "aws_route_table_association" "assoc_1" {
+  subnet_id      = aws_subnet.public_1.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "assoc_2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public_rt.id
 }
 
@@ -80,20 +86,16 @@ resource "aws_ecs_task_definition" "flask" {
   requires_compatibilities = ["FARGATE"]
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
-  container_definitions = jsonencode([
-    {
-      name      = "flask-app",
-      image     = "${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repo}:latest",
-      portMappings = [
-        {
-          containerPort = 5000,
-          hostPort      = 5000,
-          protocol      = "tcp"
-        }
-      ],
-      essential = true
-    }
-  ])
+  container_definitions = jsonencode([{
+    name      = "flask-app"
+    image     = "${var.aws_account_id}.dkr.ecr.${var.region}.amazonaws.com/${var.ecr_repo}:latest"
+    portMappings = [{
+      containerPort = 5000
+      hostPort      = 5000
+      protocol      = "tcp"
+    }]
+    essential = true
+  }])
 }
 
 resource "aws_ecs_service" "flask" {
@@ -104,8 +106,13 @@ resource "aws_ecs_service" "flask" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = [aws_subnet.public.id]
+    subnets         = [
+      aws_subnet.public_1.id,
+      aws_subnet.public_2.id
+    ]
     assign_public_ip = true
-    security_groups = [aws_security_group.ecs_sg.id]
+    security_groups  = [aws_security_group.ecs_sg.id]
   }
+
+  depends_on = [aws_iam_role_policy_attachment.ecs_exec_role_attach]
 }
