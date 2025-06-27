@@ -21,3 +21,11 @@ resource "aws_db_instance" "mydb" {
     Name = "MyPythonAppDB"
   }
 }
+
+terraform {
+  backend "s3" {
+    bucket         = "my-pyterraform-app-state-bucket"
+    key            = "ecs/terraform.tfstate"
+    region         = "us-east-2"
+  }
+}

@@ -2,8 +2,16 @@ name: Full Deploy to AWS ECS
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: 
+      - main
+      - stage
+    paths:
+      - terraform/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - terraform/**
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -18,7 +26,9 @@ jobs:
 
     defaults:
       run:
-        working-directory: terraform
+        shell: bash
+        working-directory: ./terraform
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -34,7 +44,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="bucket=${{ secrets.BUCKET_TF_STATE }}"
 
       - name: Terraform Format Check
         run: terraform fmt -recursive
@@ -43,9 +53,15 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
+        id: plan
         run: terraform plan -out=tfplan -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
 
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
       - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve tfplan
 
   docker:
