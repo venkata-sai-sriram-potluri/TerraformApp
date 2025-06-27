@@ -34,14 +34,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Terraform Init
+        run: terraform init
+
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
 
       - name: Terraform Validate
         run: terraform validate
-
-      - name: Terraform Init
-        run: terraform init
 
       - name: Terraform Plan
         run: terraform plan -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
