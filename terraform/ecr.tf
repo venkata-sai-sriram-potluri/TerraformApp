@@ -9,5 +9,4 @@ resource "aws_ecr_repository" "flask-app" {
   tags = {
     Name = "flask-app"
   }
-
 }

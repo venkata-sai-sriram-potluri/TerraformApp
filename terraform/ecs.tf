@@ -3,9 +3,10 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "public" {
+  count                   = 2
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "11.0.1.0/24"
-  availability_zone       = "us-east-2a"
+  cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index + 1)
+  availability_zone       = element(["us-east-2a", "us-east-2b"], count.index)
   map_public_ip_on_launch = true
 }
 
@@ -23,7 +24,8 @@ resource "aws_route_table" "public_rt" {
 }
 
 resource "aws_route_table_association" "assoc" {
-  subnet_id      = aws_subnet.public.id
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public_rt.id
 }
 
@@ -86,7 +88,7 @@ resource "aws_ecs_service" "flask" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = [aws_subnet.public.id]
+    subnets         = aws_subnet.public[*].id
     assign_public_ip = true
     security_groups = [aws_security_group.ecs_sg.id]
   }
