@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+FROM python:3.11-slim 
+# -- how do you pull custom image ? How to build an img, how to access it here?
 
 WORKDIR app/
 
