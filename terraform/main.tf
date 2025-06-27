@@ -6,7 +6,7 @@ resource "aws_db_instance" "mydb" {
     identifier              = "my-python-db"
     engine                  = "mysql"
     instance_class          = "db.t3.micro"
-    engine_version          = "8.0.28"
+    engine_version          = "8.0.32"
     allocated_storage       = 20
     db_name                 = "myappdb"
     username                = "User1"
