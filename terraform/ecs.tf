@@ -12,7 +12,8 @@ resource "aws_subnet" "public" {
 resource "aws_db_subnet_group" "default" {
   name       = "my-db-subnet-group"
   subnet_ids = [
-    aws_subnet.public.id,
+    aws_subnet.public_1.id,
+    aws_subnet.public_2.id
   ]
 
   tags = {
