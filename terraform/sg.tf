@@ -1,6 +1,7 @@
 resource "aws_security_group" "rds_sg" {
   name        = "rds-access"
   description = "Allow MySql access from my ip"
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     from_port   = 3306
