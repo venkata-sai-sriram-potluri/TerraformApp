@@ -5,7 +5,7 @@ provider "aws" {
 resource "aws_db_instance" "mydb" {
     identifier              = "my-python-db"
     engine                  = "mysql"
-    instance_class          = "db.t2.micro"
+    instance_class          = "db.t3.micro"
     engine_version          = "8.0.28"
     allocated_storage       = 20
     db_name                 = "myappdb"
