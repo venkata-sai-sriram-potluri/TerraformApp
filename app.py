@@ -18,8 +18,8 @@ def home():
         message VARCHAR(255)
     );
     """)
-    # cursor.execute("INSERT INTO greetings (message) VALUES ('terraformmm!');")
-    # conn.commit()
+    cursor.execute("INSERT INTO greetings (message) VALUES ('terraformmm!');")
+    conn.commit()
 
     # Fetch all rows
     cursor.execute("SELECT id, message FROM greetings;")

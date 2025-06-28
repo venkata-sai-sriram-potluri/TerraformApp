@@ -58,6 +58,11 @@ resource "aws_iam_role_policy_attachment" "ecs_exec_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name              = "/ecs/flask-app"
+  retention_in_days = 7
+}
+
 resource "aws_ecs_task_definition" "flask" {
   family                   = var.ecs_task_family
   cpu                      = "256"
@@ -77,10 +82,19 @@ resource "aws_ecs_task_definition" "flask" {
           protocol      = "tcp"
         }
       ],
+      logConfiguration = {
+      logDriver = "awslogs",
+      options = {
+        awslogs-group         = "/ecs/flask-app",
+        awslogs-region        = var.region,
+        awslogs-stream-prefix = "ecs"
+      }
+    },
       essential = true
     }
   ])
 }
+
 
 resource "aws_ecs_service" "flask" {
   name            = var.ecs_service_name
