@@ -1,7 +1,9 @@
-FROM python:3.11-slim 
-# -- how do you pull custom image ? How to build an img, how to access it here?
+FROM python:3.11-slim
 
-WORKDIR app/
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y default-libmysqlclient-dev gcc
 
