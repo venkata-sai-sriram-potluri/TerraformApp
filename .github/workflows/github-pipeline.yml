@@ -1,22 +1,17 @@
-name: Terraform Plan + Manual Apply/Destroy
+name: Full Deploy to AWS ECS
 
 on:
   push:
-    branches:
+    branches: 
       - main
       - stage
     paths:
       - terraform/**
-  workflow_dispatch:
-    inputs:
-      action:
-        description: 'Terraform action'
-        required: true
-        default: 'apply'
-        type: choice
-        options:
-          - apply
-          - destroy
+  pull_request:
+    branches:
+      - main
+    paths:
+      - terraform/**
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -26,56 +21,68 @@ env:
 
 jobs:
   terraform:
+    name: Terraform - Infrastructure Provisioning
     runs-on: ubuntu-latest
+
     defaults:
       run:
+        shell: bash
         working-directory: ./terraform
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v2
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
         run: terraform init -backend-config="bucket=${{ secrets.BUCKET_TF_STATE }}"
+
+      - name: Terraform Format Check
+        run: terraform fmt -recursive
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
-        if: github.event_name == 'push'
+        id: plan
         run: terraform plan -out=tfplan -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
 
-      - name: Terraform Apply or Destroy
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          if [ "${{ github.event.inputs.action }}" == "apply" ]; then
-            terraform apply -auto-approve
-          else
-            terraform destroy -auto-approve -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
-          fi
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
 
   docker:
-    needs: terraform
+    name: Docker - Build and Push to ECR
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply'
+    needs: terraform
+    if: ${{ github.event.inputs.action == 'apply' }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - uses: aws-actions/configure-aws-credentials@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: aws-actions/amazon-ecr-login@v1
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build and Push Docker image
         run: |
