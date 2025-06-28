@@ -83,18 +83,17 @@ resource "aws_ecs_task_definition" "flask" {
         }
       ],
       logConfiguration = {
-      logDriver = "awslogs",
-      options = {
-        awslogs-group         = "/ecs/flask-app",
-        awslogs-region        = var.region,
-        awslogs-stream-prefix = "ecs"
-      }
-    },
+        logDriver = "awslogs",
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.ecs_log_group.name,
+          awslogs-region        = var.region,
+          awslogs-stream-prefix = "ecs"
+        }
+      },
       essential = true
     }
   ])
 }
-
 
 resource "aws_ecs_service" "flask" {
   name            = var.ecs_service_name
