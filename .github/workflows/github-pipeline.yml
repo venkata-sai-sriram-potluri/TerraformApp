@@ -1,17 +1,6 @@
-name: Full Deploy to AWS ECS
+name: Terraform Manual Apply/Destroy
 
 on:
-  push:
-    branches: 
-      - main
-      - stage
-    paths:
-      - terraform/**
-  pull_request:
-    branches:
-      - main
-    paths:
-      - terraform/**
   workflow_dispatch:
     inputs:
       action:
@@ -31,7 +20,7 @@ env:
 
 jobs:
   terraform:
-    name: Terraform - Infrastructure Provisioning
+    name: Terraform Manual Apply/Destroy
     runs-on: ubuntu-latest
 
     defaults:
@@ -63,12 +52,12 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        if: github.event.inputs.action != 'destroy'
+        if: github.event.inputs.action == 'apply'
         id: plan
         run: terraform plan -out=tfplan -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
 
       - name: Terraform Plan Status
-        if: github.event.inputs.action != 'destroy' && steps.plan.outcome == 'failure'
+        if: github.event.inputs.action == 'apply' && steps.plan.outcome == 'failure'
         run: exit 1
 
       - name: Terraform Apply
@@ -80,10 +69,10 @@ jobs:
         run: terraform destroy -auto-approve -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
 
   docker:
-    name: Docker - Build and Push to ECR
+    name: Docker Build & Push (Apply Only)
     runs-on: ubuntu-latest
     needs: terraform
-    if: github.event.inputs.action == 'apply' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
+    if: github.event.inputs.action == 'apply'
 
     steps:
       - name: Checkout code
