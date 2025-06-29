@@ -1,5 +1,25 @@
+terraform {
+  backend "s3" {
+    bucket = "my-pyterraform-app-state-bucket"
+    key    = "ecs/terraform.tfstate"
+    region = "us-east-2"
+  }
+
+  required_providers {
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
+  }
+}
+
 provider "aws" {
   region = "us-east-2"
+}
+
+resource "random_password" "db_password" {
+  length  = 16
+  special = true
 }
 
 resource "aws_db_subnet_group" "default" {
@@ -19,7 +39,7 @@ resource "aws_db_instance" "mydb" {
   allocated_storage       = 20
   db_name                 = "myappdb"
   username                = "User1"
-  password                = "Admin123"
+  password                = random_password.db_password.result
   publicly_accessible     = true
   skip_final_snapshot     = true
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]
@@ -30,23 +50,20 @@ resource "aws_db_instance" "mydb" {
   }
 }
 
-# ✅ Add Secrets Manager Secret
 resource "aws_secretsmanager_secret" "db_secret" {
   name = "myapp-db-credentials"
 }
 
-# ✅ Populate the Secret with DB credentials and endpoint
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
   secret_id     = aws_secretsmanager_secret.db_secret.id
   secret_string = jsonencode({
     host     = aws_db_instance.mydb.address,
     username = "User1",
-    password = "Admin123",
+    password = random_password.db_password.result,
     database = "myappdb"
   })
 }
 
-# ✅ IAM policy document to allow reading the secret (attach this to EC2 or ECS role separately)
 data "aws_iam_policy_document" "db_secret_access" {
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
@@ -57,13 +74,4 @@ data "aws_iam_policy_document" "db_secret_access" {
 resource "aws_iam_policy" "db_secret_access_policy" {
   name   = "MyAppDBSecretAccess"
   policy = data.aws_iam_policy_document.db_secret_access.json
-}
-
-
-terraform {
-  backend "s3" {
-    bucket         = "my-pyterraform-app-state-bucket"
-    key            = "ecs/terraform.tfstate"
-    region         = "us-east-2"
-  }
 }
