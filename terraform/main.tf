@@ -67,10 +67,15 @@ resource "aws_secretsmanager_secret_version" "db_secret_version" {
   })
 }
 
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "db_secret_access" {
   statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.db_secret.arn]
+    effect = "Allow"
+    actions = ["secretsmanager:GetSecretValue"]
+    resources = [
+      "arn:aws:secretsmanager:us-east-2:${data.aws_caller_identity.current.account_id}:secret:myapp-db-credentials*"
+    ]
   }
 }
 
