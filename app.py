@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 def get_db_credentials():
     client = boto3.client("secretsmanager", region_name="us-east-2")
-    response = client.get_secret_value(SecretId="myapp-db-credentials")
+    response = client.get_secret_value(SecretId="db_secret_version")
     return json.loads(response["SecretString"])
 
 @app.route("/")
