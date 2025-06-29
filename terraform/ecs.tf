@@ -58,6 +58,30 @@ resource "aws_iam_role_policy_attachment" "ecs_exec_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Task Role - for app container to access Secrets Manager
+resource "aws_iam_role" "ecs_task_role" {
+  name = "ecsTaskRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_secrets_access" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.db_secret_access_policy.arn
+}
+
+# Attach the Secrets Manager policy to execution role too, in case you want to fetch secrets during startup
 resource "aws_iam_role_policy_attachment" "ecs_secret_access" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.db_secret_access_policy.arn
@@ -75,6 +99,7 @@ resource "aws_ecs_task_definition" "flask" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
