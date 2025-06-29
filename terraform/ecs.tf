@@ -58,18 +58,6 @@ resource "aws_iam_role_policy_attachment" "ecs_exec_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-data "aws_iam_policy_document" "db_secret_access" {
-  statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = ["arn:aws:secretsmanager:${var.region}:${var.aws_account_id}:secret:myapp-db-credentials*"]
-  }
-}
-
-resource "aws_iam_policy" "db_secret_access_policy" {
-  name   = "DBSecretAccessPolicy"
-  policy = data.aws_iam_policy_document.db_secret_access.json
-}
-
 resource "aws_iam_role_policy_attachment" "ecs_secret_access" {
   role       = aws_iam_role.ecs_task_execution_role.name
   policy_arn = aws_iam_policy.db_secret_access_policy.arn
