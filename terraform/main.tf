@@ -30,6 +30,36 @@ resource "aws_db_instance" "mydb" {
   }
 }
 
+# ✅ Add Secrets Manager Secret
+resource "aws_secretsmanager_secret" "db_secret" {
+  name = "myapp-db-credentials"
+}
+
+# ✅ Populate the Secret with DB credentials and endpoint
+resource "aws_secretsmanager_secret_version" "db_secret_version" {
+  secret_id     = aws_secretsmanager_secret.db_secret.id
+  secret_string = jsonencode({
+    host     = aws_db_instance.mydb.address,
+    username = "User1",
+    password = "Admin123",
+    database = "myappdb"
+  })
+}
+
+# ✅ IAM policy document to allow reading the secret (attach this to EC2 or ECS role separately)
+data "aws_iam_policy_document" "db_secret_access" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [aws_secretsmanager_secret.db_secret.arn]
+  }
+}
+
+resource "aws_iam_policy" "db_secret_access_policy" {
+  name   = "MyAppDBSecretAccess"
+  policy = data.aws_iam_policy_document.db_secret_access.json
+}
+
+
 terraform {
   backend "s3" {
     bucket         = "my-pyterraform-app-state-bucket"

@@ -1,16 +1,25 @@
 from flask import Flask
 import mysql.connector
+import boto3
+import json
 
 app = Flask(__name__)
+
+def get_db_credentials():
+    client = boto3.client("secretsmanager", region_name="us-east-2")
+    response = client.get_secret_value(SecretId="myapp-db-credentials")
+    return json.loads(response["SecretString"])
 
 @app.route("/")
 def home():
     try:
+        creds = get_db_credentials()
+
         conn = mysql.connector.connect(
-            host="my-python-db.cdska6wmq49g.us-east-2.rds.amazonaws.com",
-            user="User1",
-            password="Admin123",
-            database="myappdb"
+            host=creds['host'],
+            user=creds['username'],
+            password=creds['password'],
+            database=creds['database']
         )
         cursor = conn.cursor()
         cursor.execute("""
@@ -35,7 +44,6 @@ def home():
 
     except Exception as e:
         return f"<h3>ERROR: {e}</h3>", 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
