@@ -58,6 +58,23 @@ resource "aws_iam_role_policy_attachment" "ecs_exec_role_attach" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy_document" "db_secret_access" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = ["arn:aws:secretsmanager:${var.region}:${var.aws_account_id}:secret:myapp-db-credentials*"]
+  }
+}
+
+resource "aws_iam_policy" "db_secret_access_policy" {
+  name   = "DBSecretAccessPolicy"
+  policy = data.aws_iam_policy_document.db_secret_access.json
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_secret_access" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.db_secret_access_policy.arn
+}
+
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = "/ecs/flask-app"
   retention_in_days = 7
@@ -108,3 +125,6 @@ resource "aws_ecs_service" "flask" {
     security_groups = [aws_security_group.ecs_sg.id]
   }
 }
+
+
+# You (root user) can create a house (RDS + Secret), but the person (ECS task) who moves in needs a key (IAM permissions) to open the door (Secrets Manager).
