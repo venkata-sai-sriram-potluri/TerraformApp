@@ -2,11 +2,12 @@ from flask import Flask
 import mysql.connector
 import boto3
 import json
-
+import os
 app = Flask(__name__)
 
 def get_db_credentials():
-    client = boto3.client("secretsmanager", region_name="us-east-2")
+    session = boto3.session.Session()
+    client = session.client("secretsmanager", region_name=os.environ.get("AWS_REGION", "us-east-2"))
     response = client.get_secret_value(SecretId="arn:aws:secretsmanager:us-east-2:418272754287:secret:myapp-db-credentials-z2by6s")
     return json.loads(response["SecretString"])
 
