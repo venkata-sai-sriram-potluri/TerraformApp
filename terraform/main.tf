@@ -54,7 +54,7 @@ resource "aws_db_instance" "mydb" {
 }
 
 resource "aws_secretsmanager_secret" "db_secret" {
-  name = "myapp-db-credentials"
+  name = "myapp-db-credentials-v2"
 }
 
 resource "aws_secretsmanager_secret_version" "db_secret_version" {
