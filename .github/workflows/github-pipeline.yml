@@ -54,7 +54,11 @@ jobs:
       - name: Terraform Plan
         if: github.event.inputs.action == 'apply'
         id: plan
-        run: terraform plan -out=tfplan -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
+        run: terraform plan -out=tfplan \
+          -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" \
+          -var="ecr_repo=${{ env.ECR_REPO }}" \
+          -var="db_username=${{ secrets.DB_USERNAME }}" \
+          -var="db_password=${{ secrets.DB_PASSWORD }}"
 
       - name: Terraform Plan Status
         if: github.event.inputs.action == 'apply' && steps.plan.outcome == 'failure'
@@ -66,7 +70,11 @@ jobs:
 
       - name: Terraform Destroy
         if: github.event.inputs.action == 'destroy'
-        run: terraform destroy -auto-approve -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" -var="ecr_repo=${{ env.ECR_REPO }}"
+        run: terraform destroy -auto-approve \
+          -var="aws_account_id=${{ env.AWS_ACCOUNT_ID }}" \
+          -var="ecr_repo=${{ env.ECR_REPO }}" \
+          -var="db_username=${{ secrets.DB_USERNAME }}" \
+          -var="db_password=${{ secrets.DB_PASSWORD }}"
 
   docker:
     name: Docker Build & Push (Apply Only)
