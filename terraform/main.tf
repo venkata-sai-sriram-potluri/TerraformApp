@@ -10,11 +10,6 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "random_password" "db_password" {
-  length          = 16
-  special         = true
-  override_special = "!#$%&'()*+,-.:;<=>?[]^_`{|}~"
-}
 
 
 
@@ -34,8 +29,8 @@ resource "aws_db_instance" "mydb" {
   engine_version          = "8.0.32"
   allocated_storage       = 20
   db_name                 = "myappdb"
-  username                = "User1"
-  password                = random_password.db_password.result
+  username                = var.db_username
+  password                = var.db_password
   publicly_accessible     = true
   skip_final_snapshot     = true
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]

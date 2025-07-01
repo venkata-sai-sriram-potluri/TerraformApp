@@ -13,3 +13,11 @@ variable "ecs_task_family" {
 variable "ecs_service_name" {
   default = "flask-service"
 }
+variable "db_username" {
+  type = string
+}
+
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
