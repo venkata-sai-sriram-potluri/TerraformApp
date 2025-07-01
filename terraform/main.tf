@@ -4,13 +4,6 @@ terraform {
     key    = "ecs/terraform.tfstate"
     region = "us-east-2"
   }
-
-  required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
-  }
 }
 
 provider "aws" {
