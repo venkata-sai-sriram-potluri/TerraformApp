@@ -54,7 +54,7 @@ data "aws_iam_policy_document" "db_secret_access" {
   statement {
     effect = "Allow"
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [aws_secretsmanager_secret.db_secret.arn]
+    resources = [data.aws_secretsmanager_secret.db_secret.arn]
   }
 }
 
