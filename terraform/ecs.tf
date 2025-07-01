@@ -112,6 +112,12 @@ resource "aws_ecs_task_definition" "flask" {
           protocol      = "tcp"
         }
       ],
+       environment = [
+      {
+        name  = "AWS_REGION"
+        value = var.region
+      }
+    ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {

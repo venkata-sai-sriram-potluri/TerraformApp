@@ -90,7 +90,6 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          echo "Building and pushing to $IMAGE_URI"
           docker build -t $IMAGE_URI .
           docker push $IMAGE_URI
 

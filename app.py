@@ -1,15 +1,23 @@
 from flask import Flask
 import mysql.connector
-import boto3
 import json
 import os
+
 app = Flask(__name__)
 
 def get_db_credentials():
-    session = boto3.session.Session()
-    client = session.client("secretsmanager", region_name=os.environ.get("AWS_REGION", "us-east-2"))
-    response = client.get_secret_value(SecretId="arn:aws:secretsmanager:us-east-2:418272754287:secret:myapp-db-credentials-z2by6s")
-    return json.loads(response["SecretString"])
+    try:
+        secret_str = os.environ.get("myapp-db-credentials")
+        if not secret_str:
+            raise Exception("Environment variable 'myapp-db-credentials' not found")
+
+        creds = json.loads(secret_str)
+        print("Secret fetched from env var")
+        return creds
+
+    except Exception as e:
+        print("Error fetching secret:", e)
+        raise
 
 @app.route("/")
 def home():

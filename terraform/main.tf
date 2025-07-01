@@ -53,29 +53,15 @@ resource "aws_db_instance" "mydb" {
   }
 }
 
-resource "aws_secretsmanager_secret" "db_secret" {
-  name = "myapp-db-credentials-v2"
+data "aws_secretsmanager_secret" "db_secret" {
+  name = "myapp-db-credentials"
 }
-
-resource "aws_secretsmanager_secret_version" "db_secret_version" {
-  secret_id     = aws_secretsmanager_secret.db_secret.id
-  secret_string = jsonencode({
-    host     = aws_db_instance.mydb.address,
-    username = "User1",
-    password = random_password.db_password.result,
-    database = "myappdb"
-  })
-}
-
-data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "db_secret_access" {
   statement {
     effect = "Allow"
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [
-      "arn:aws:secretsmanager:us-east-2:${data.aws_caller_identity.current.account_id}:secret:myapp-db-credentials*"
-    ]
+    resources = [data.aws_secretsmanager_secret.db_secret.arn]
   }
 }
 
@@ -83,3 +69,4 @@ resource "aws_iam_policy" "db_secret_access_policy" {
   name   = "MyAppDBSecretAccess"
   policy = data.aws_iam_policy_document.db_secret_access.json
 }
+
