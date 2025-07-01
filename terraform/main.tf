@@ -4,13 +4,6 @@ terraform {
     key    = "ecs/terraform.tfstate"
     region = "us-east-2"
   }
-
-  required_providers {
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
-  }
 }
 
 provider "aws" {
@@ -61,7 +54,7 @@ data "aws_iam_policy_document" "db_secret_access" {
   statement {
     effect = "Allow"
     actions = ["secretsmanager:GetSecretValue"]
-    resources = [data.aws_secretsmanager_secret.db_secret.arn]
+    resources = [aws_secretsmanager_secret.db_secret.arn]
   }
 }
 
@@ -69,4 +62,3 @@ resource "aws_iam_policy" "db_secret_access_policy" {
   name   = "MyAppDBSecretAccess"
   policy = data.aws_iam_policy_document.db_secret_access.json
 }
-
