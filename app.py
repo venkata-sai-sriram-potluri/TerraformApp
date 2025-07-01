@@ -7,9 +7,9 @@ app = Flask(__name__)
 
 def get_db_credentials():
     try:
-        secret_str = os.environ.get("myapp-db-credentials")
+        secret_str = os.environ.get("DB_SECRET")
         if not secret_str:
-            raise Exception("Environment variable 'myapp-db-credentials' not found")
+            raise Exception("Environment variable 'DB_SECRET' not found")
 
         creds = json.loads(secret_str)
         print("Secret fetched from env var")
@@ -18,7 +18,7 @@ def get_db_credentials():
     except Exception as e:
         print("Error fetching secret:", e)
         raise
-
+    
 @app.route("/")
 def home():
     try:

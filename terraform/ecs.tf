@@ -112,12 +112,12 @@ resource "aws_ecs_task_definition" "flask" {
           protocol      = "tcp"
         }
       ],
-       environment = [
-      {
-        name  = "AWS_REGION"
-        value = var.region
-      }
-    ],
+       secrets = [
+        {
+          name      = "DB_SECRET"
+          valueFrom = "arn:aws:secretsmanager:us-east-2:418272754287:secret:myapp-db-credentials-z2by6s"
+        }
+      ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
